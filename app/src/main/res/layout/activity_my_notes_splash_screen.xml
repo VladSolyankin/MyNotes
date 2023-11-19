@@ -1,0 +1,18 @@
+<!-- res/layout/activity_splash_screen.xml -->
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF"
+    tools:context=".MyNotesSplashScreen">
+
+    <View
+        android:id="@+id/splashImageView"
+        android:layout_width="256dp"
+        android:layout_height="256dp"
+        android:background="@drawable/my_notes_logo"
+        android:layout_centerInParent="true"
+        android:layout_margin="16dp" />
+
+
+</RelativeLayout>

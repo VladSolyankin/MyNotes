@@ -1,0 +1,14 @@
+<!-- res/drawable/circle_background.xml -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#CCCCCC" /> <!-- Цвет фона -->
+        </shape>
+    </item>
+    <item android:right="5dp" android:left="5dp" android:top="5dp" android:bottom="5dp">
+        <shape android:shape="oval">
+            <solid android:color="@color/white" />
+            <corners android:radius="50dp" />
+        </shape>
+    </item>
+</layer-list>

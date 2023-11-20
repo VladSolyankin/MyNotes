@@ -31,4 +31,12 @@
         android:layout_margin="16dp"
         android:src="@android:drawable/ic_input_add"/>
 
+    <Spinner
+        android:id="@+id/sortSpinner"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentEnd="true"
+        android:layout_marginEnd="16dp"
+        android:layout_marginTop="16dp"/>
+
 </RelativeLayout>

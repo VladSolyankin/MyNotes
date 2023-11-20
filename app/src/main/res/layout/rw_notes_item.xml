@@ -13,13 +13,25 @@
         android:scaleType="centerCrop"
         android:background="@drawable/circle_background"/>
 
-    <TextView
-        android:id="@+id/itemName"
-        android:layout_width="0dp"
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:layout_marginStart="16dp"
-        android:textAppearance="?android:textAppearanceMedium"/>
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/itemName"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="16dp"
+            android:textAppearance="?android:textAppearanceMedium"/>
+
+        <TextView
+            android:id="@+id/textViewDate"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:paddingTop="8dp"/>
+    </androidx.appcompat.widget.LinearLayoutCompat>
 
     <ImageButton
         android:id="@+id/deleteButton"

@@ -17,9 +17,12 @@ import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -47,12 +50,23 @@ public class UserNotesActivity extends AppCompatActivity {
 
         recyclerView = findViewById(R.id.recyclerView);
 
-//        notesList.add(new NoteModel(R.drawable.my_notes_logo, "Item 1"));
-//        notesList.add(new NoteModel(R.drawable.my_notes_logo, "Item 2"));
-//        notesList.add(new NoteModel(R.drawable.my_notes_logo, "Item 3"));
-//        notesList.add(new NoteModel(R.drawable.my_notes_logo, "Item 4"));
-//        notesList.add(new NoteModel(R.drawable.my_notes_logo, "Item 5"));
-//        notesList.add(new NoteModel(R.drawable.my_notes_logo, "Item 6"));
+        Spinner sortSpinner = findViewById(R.id.sortSpinner);
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
+                this, R.array.sort_options, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        sortSpinner.setAdapter(adapter);
+
+        sortSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> adapterView, View view, int position, long id) {
+                handleSortSelection(position);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> adapterView) {
+                Log.d("error: ", " spinner failed");
+            }
+        });
 
         itemAdapter = new UserNotesAdapter(notesList);
         recyclerView.setAdapter(itemAdapter);
@@ -66,6 +80,27 @@ public class UserNotesActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void handleSortSelection(int position) {
+        switch (position) {
+            case 0:
+                itemAdapter.setSortByDate(false);
+                itemAdapter.setAscendingOrder(true);
+                break;
+            case 1:
+                itemAdapter.setSortByDate(false);
+                itemAdapter.setAscendingOrder(false);
+                break;
+            case 2:
+                itemAdapter.setSortByDate(true);
+                itemAdapter.setAscendingOrder(true);
+                break;
+            case 3:
+                itemAdapter.setSortByDate(true);
+                itemAdapter.setAscendingOrder(false);
+                break;
+        }
     }
 
     @Override

@@ -55,6 +55,7 @@ public class LoginUserActivity extends AppCompatActivity {
                                     Toast.makeText(LoginUserActivity.this, "Authentication failed.",
                                             Toast.LENGTH_SHORT).show();
                                 }
+
                             }
                         });
             }

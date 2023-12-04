@@ -1,5 +1,6 @@
 package com.example.mynotes;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -16,22 +17,38 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.OpenableColumns;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import androidx.appcompat.widget.SearchView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FieldValue;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.squareup.picasso.Picasso;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class UserNotesActivity extends AppCompatActivity {
@@ -43,12 +60,16 @@ public class UserNotesActivity extends AppCompatActivity {
     private Uri selectedImageUri;
     private int selectedImageResource;
     private ImageView dialogImageView;
+    private FirebaseFirestore fireStore;
+    private FirebaseAuth userAuth;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_notes);
 
         recyclerView = findViewById(R.id.recyclerView);
+        fireStore = FirebaseFirestore.getInstance();
+        userAuth = FirebaseAuth.getInstance();
 
         Spinner sortSpinner = findViewById(R.id.sortSpinner);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
@@ -80,6 +101,30 @@ public class UserNotesActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater menuInflater = getMenuInflater();
+        menuInflater.inflate(R.menu.menu, menu);
+
+        MenuItem searchItem = menu.findItem(R.id.action_search);
+        SearchView searchView = (SearchView) searchItem.getActionView();
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                itemAdapter.getFilter().filter(newText);
+                return true;
+            }
+        });
+
+        return true;
     }
 
     private void handleSortSelection(int position) {
@@ -158,8 +203,26 @@ public class UserNotesActivity extends AppCompatActivity {
                 String itemName = editTextName.getText().toString().trim();
                 if (!itemName.isEmpty()) {
                     if (!isTitleDuplicated(itemName)) {
-                        itemAdapter.addItem(new NoteModel(selectedImageUri, itemName));
-                        itemAdapter.notifyDataSetChanged();
+                        NoteModel note = new NoteModel(selectedImageUri, itemName, getCurrentDate());
+                        itemAdapter.addItem(note);
+
+                        FirebaseUser user = userAuth.getCurrentUser();
+
+                        Map<String, Object> noteMap = new HashMap<>();
+                        noteMap.put("title", note.getItemName());
+                        noteMap.put("date", note.getDate());
+                        noteMap.put("content", "");
+                        noteMap.put("imagePath", note.getImageResource());
+
+                        fireStore.collection("users")
+                                .document(user.getUid())
+                                .update("notes", FieldValue.arrayUnion(noteMap))
+                                .addOnSuccessListener(new OnSuccessListener<Void>() {
+                                    @Override
+                                    public void onSuccess(Void unused) {
+                                        itemAdapter.notifyDataSetChanged();
+                                    }
+                                });
                         alertDialog.dismiss();
                     }
                     else {
@@ -185,5 +248,9 @@ public class UserNotesActivity extends AppCompatActivity {
             if (Objects.equals(note.getItemName(), itemName)) return true;
         }
         return false;
+    }
+
+    private Date getCurrentDate() {
+        return Calendar.getInstance().getTime();
     }
 }

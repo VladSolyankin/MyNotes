@@ -19,16 +19,24 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 public class RegisterUserActivity extends AppCompatActivity {
 
     private FirebaseAuth userAuth;
+    private FirebaseFirestore fireStore;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_register_user);
 
         userAuth = FirebaseAuth.getInstance();
+        fireStore = FirebaseFirestore.getInstance();
 
         TextView title = findViewById(R.id.titleTextView);
         title.setLayerType(View.LAYER_TYPE_SOFTWARE, null);
@@ -57,6 +65,18 @@ public class RegisterUserActivity extends AppCompatActivity {
                                     Log.d("Log: ", "createUserWithEmail:success");
                                     FirebaseUser user = userAuth.getCurrentUser();
 
+                                    Map<String, Object> userData = new HashMap<>();
+                                    userData.put("name", String.valueOf(usernameEditText.getText()));
+                                    userData.put("email", user.getEmail());
+                                    userData.put("phone", String.valueOf(phoneEditText.getText()));
+                                    userData.put("notes", new ArrayList<>());
+
+                                    DocumentReference userDocument = fireStore
+                                            .collection("users")
+                                            .document(user.getUid());
+
+                                    userDocument.set(userData);
+
                                     Intent intent = new Intent(RegisterUserActivity.this, UserNotesActivity.class);
                                     startActivity(intent);
                                 } else {
@@ -64,6 +84,7 @@ public class RegisterUserActivity extends AppCompatActivity {
                                     Toast.makeText(RegisterUserActivity.this, "Authentication failed.",
                                             Toast.LENGTH_SHORT).show();
                                 }
+
                             }
                         });
             }

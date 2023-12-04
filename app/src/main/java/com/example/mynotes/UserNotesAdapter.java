@@ -125,18 +125,17 @@ public class UserNotesAdapter extends RecyclerView.Adapter<UserNotesAdapter.View
                 String filterText = constraint.toString().toLowerCase().trim();
                 List<NoteModel> filteredList = new ArrayList<>();
 
-                if (filteredList.isEmpty()) {
+                if (filterText.isEmpty()) {
                     filteredList.addAll(itemList);
-                }
-                else {
-                    for (NoteModel note: filteredList) {
+                } else {
+                    for (NoteModel note : itemList) {
                         if (note.getItemName().toLowerCase().contains(filterText)) {
                             filteredList.add(note);
                         }
                     }
                 }
 
-                sortItems();
+                //sortItems();
 
                 FilterResults filterResult = new FilterResults();
                 filterResult.values = filteredList;

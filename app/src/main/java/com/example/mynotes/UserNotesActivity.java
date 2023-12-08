@@ -35,7 +35,6 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.squareup.picasso.Picasso;
@@ -71,23 +70,6 @@ public class UserNotesActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerView);
         fireStore = FirebaseFirestore.getInstance();
         userAuth = FirebaseAuth.getInstance();
-
-        fireStore.collection("users")
-               .document(userAuth.getCurrentUser().getUid())
-                .get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
-                    @Override
-                    public void onSuccess(DocumentSnapshot documentSnapshot) {
-                        if (documentSnapshot.exists()) {
-                            Map<String, Object> notes = (Map<String, Object>) documentSnapshot.get("notes");
-
-//                            NoteModel newNote = new NoteModel();
-//                            for (String key: notes.keySet()) {
-//                                if (key != "content")
-//                                    notesList.add(new NoteModel(note.imagePath, note.title, note.date));
-//                            }
-                        }
-                    }
-                });
 
         Spinner sortSpinner = findViewById(R.id.sortSpinner);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(

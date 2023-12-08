@@ -108,6 +108,12 @@ public class UserNotesAdapter extends RecyclerView.Adapter<UserNotesAdapter.View
         notifyItemRangeChanged(position, getItemCount());
     }
 
+    public void updateData(List<NoteModel> newList) {
+        itemList.clear();
+        itemList.addAll(newList);
+        notifyDataSetChanged();
+    }
+
     public void setSortByDate(boolean sortByDate) {
         this.sortByDate = sortByDate;
         sortItems();

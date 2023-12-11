@@ -1,9 +1,9 @@
 <resources>
     <string name="app_name">MyNotes</string>
     <string-array name="sort_options">
-        <item>Sort by Name (Asc)</item>
-        <item>Sort by Name (Desc)</item>
-        <item>Sort by Date (Asc)</item>
-        <item>Sort by Date (Desc)</item>
+        <item>Sort by Name ⬆️</item>
+        <item>Sort by Name ⬇️</item>
+        <item>Sort by Date ⬆️</item>
+        <item>Sort by Date ⬇️</item>
     </string-array>
 </resources>

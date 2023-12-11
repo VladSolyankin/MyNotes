@@ -12,7 +12,6 @@
         android:text="NOTES"
         android:textSize="26dp"
         android:fontFamily="@font/chango"
-        android:textColor="@color/black"
         android:layout_marginTop="20dp"
         android:layout_marginStart="20dp"
         android:layout_centerHorizontal="false"

@@ -141,8 +141,6 @@ public class UserNotesAdapter extends RecyclerView.Adapter<UserNotesAdapter.View
                     }
                 }
 
-                //sortItems();
-
                 FilterResults filterResult = new FilterResults();
                 filterResult.values = filteredList;
                 return filterResult;

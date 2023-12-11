@@ -33,8 +33,10 @@ import android.widget.Toast;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.squareup.picasso.Picasso;
@@ -62,6 +64,7 @@ public class UserNotesActivity extends AppCompatActivity {
     private ImageView dialogImageView;
     private FirebaseFirestore fireStore;
     private FirebaseAuth userAuth;
+    private FirebaseUser currentUser;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,6 +73,7 @@ public class UserNotesActivity extends AppCompatActivity {
         recyclerView = findViewById(R.id.recyclerView);
         fireStore = FirebaseFirestore.getInstance();
         userAuth = FirebaseAuth.getInstance();
+        currentUser = userAuth.getCurrentUser();
 
         Spinner sortSpinner = findViewById(R.id.sortSpinner);
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(
@@ -101,6 +105,8 @@ public class UserNotesActivity extends AppCompatActivity {
             }
         });
 
+        loadNotesFromDatabase();
+
     }
 
     @Override
@@ -126,6 +132,53 @@ public class UserNotesActivity extends AppCompatActivity {
 
         return true;
     }
+
+    private void loadNotesFromDatabase() {
+        fireStore.collection("users").document(currentUser.getUid())
+                .get().addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        DocumentSnapshot document = task.getResult();
+                        if (document.exists()) {
+                            List<Map<String, Object>> notes = (List<Map<String, Object>>) document.get("notes");
+
+                            List<NoteModel> newNotesList = new ArrayList<>();
+
+                            if (notes != null) {
+                                for (Map<String, Object> note : notes) {
+                                    NoteModel newNote;
+                                    if (note.get("imagePath") != null) {
+                                        newNote = new NoteModel(
+                                                Uri.parse(note.get("imagePath").toString()),
+                                                (String) note.get("title"),
+                                                ((Timestamp)note.get("date")).toDate()
+                                        );
+                                    }
+                                    else {
+                                        newNote = new NoteModel(
+                                                Uri.parse(""),
+                                                (String) note.get("title"),
+                                                ((Timestamp)note.get("date")).toDate()
+                                        );
+                                    }
+                                    newNotesList.add(newNote);
+                                }
+
+                                runOnUiThread(() -> {
+                                    itemAdapter.updateData(newNotesList);
+                                    itemAdapter.getFilter().filter("");
+                                    itemAdapter.notifyDataSetChanged();
+                                });
+                            }
+                            else {
+                                Log.d("err: ", "notes are empty");
+                            }
+                        } else {
+                            Log.d("err: ", "document don't exist");
+                        }
+                    }
+                });
+    }
+
 
     private void handleSortSelection(int position) {
         switch (position) {

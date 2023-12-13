@@ -9,7 +9,7 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 
-public class MyNotesSplashScreen extends AppCompatActivity {
+public class SplashScreen extends AppCompatActivity {
     private static final int SPLASH_TIMEOUT = 1000;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,7 +24,7 @@ public class MyNotesSplashScreen extends AppCompatActivity {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                Intent intent = new Intent(MyNotesSplashScreen.this, RegisterUserActivity.class);
+                Intent intent = new Intent(SplashScreen.this, RegisterUserActivity.class);
                 startActivity(intent);
                 finish();
             }

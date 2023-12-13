@@ -9,13 +9,14 @@ public class NoteModel {
 
     private String itemName;
     private Date date;
+    private String content;
+
 
     public NoteModel(Uri imageResource, String itemName, Date date) {
         this.imageResource = imageResource;
         this.itemName = itemName;
         this.date = date;
     }
-
     public Date getDate() {
         return date;
     }
@@ -38,5 +39,13 @@ public class NoteModel {
 
     public void setItemName(String itemName) {
         this.itemName = itemName;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
     }
 }

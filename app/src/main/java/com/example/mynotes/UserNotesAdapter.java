@@ -14,6 +14,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.tasks.OnCompleteListener;
@@ -22,16 +23,21 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.FirebaseFirestoreException;
+import com.google.firebase.firestore.Transaction;
 import com.squareup.picasso.Picasso;
 
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class UserNotesAdapter extends RecyclerView.Adapter<UserNotesAdapter.ViewHolder> {
 
@@ -83,9 +89,37 @@ public class UserNotesAdapter extends RecyclerView.Adapter<UserNotesAdapter.View
             @Override
             public void onClick(View view) {
                 removeItem(position);
-                SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.remove(currentItem.getItemName());
-                editor.apply();
+
+                if (user != null) {
+                    fireStore.runTransaction(new Transaction.Function<Void>() {
+                        @Nullable
+                        @Override
+                        public Void apply(@NonNull Transaction transaction) throws FirebaseFirestoreException {
+                            DocumentReference userRef = fireStore
+                                    .collection("users")
+                                    .document(user.getUid());
+
+                            DocumentSnapshot snapshot = transaction.get(userRef);
+                            List<Map<String, Object>> notes = (List<Map<String, Object>>) snapshot.get("notes");
+
+                            if (notes != null) {
+                                int indexToRemove = -1;
+                                for (int i = 0; i < notes.size(); i++) {
+                                    Map<String, Object> note = notes.get(i);
+                                    if (note.get("title").equals(currentItem.getItemName())) {
+                                        indexToRemove = i;
+                                        break;
+                                    }
+                                }
+                                if (indexToRemove != -1) {
+                                    notes.remove(indexToRemove);
+                                    transaction.update(userRef, "notes", notes);
+                                }
+                            }
+                            return null;
+                        }
+                    });
+                }
             }
         });
     }
@@ -103,9 +137,12 @@ public class UserNotesAdapter extends RecyclerView.Adapter<UserNotesAdapter.View
     }
 
     public void removeItem(int position) {
-        itemList.remove(position);
-        notifyItemRemoved(position);
-        notifyItemRangeChanged(position, getItemCount());
+        if (position >= 0 && position < itemList.size()) {
+            itemList.remove(position);
+            filteredNotesList.remove(position);
+            notifyItemRemoved(position);
+            notifyItemRangeChanged(position, itemList.size());
+        }
     }
 
     public void updateData(List<NoteModel> newList) {
@@ -190,7 +227,6 @@ public class UserNotesAdapter extends RecyclerView.Adapter<UserNotesAdapter.View
     public List<NoteModel> getItemList() {
         return itemList;
     }
-
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView itemImage;

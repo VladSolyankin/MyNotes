@@ -29,7 +29,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-public class RegisterUserActivity extends AppCompatActivity {
+public class
+RegisterUserActivity extends AppCompatActivity {
 
     private FirebaseAuth userAuth;
     private FirebaseFirestore fireStore;

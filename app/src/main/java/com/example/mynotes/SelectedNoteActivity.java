@@ -1,12 +1,23 @@
 package com.example.mynotes;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.Spannable;
+import android.text.SpannableStringBuilder;
+import android.text.TextUtils;
+import android.text.style.StyleSpan;
+import android.text.style.TypefaceSpan;
+import android.text.style.UnderlineSpan;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -28,6 +39,8 @@ public class SelectedNoteActivity extends AppCompatActivity {
     private FirebaseAuth firebaseAuth;
     private FirebaseFirestore fireStore;
     FirebaseUser currentUser;
+    private int currentTypeface = Typeface.NORMAL;
+    private boolean isUnderlined = false;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,10 +55,6 @@ public class SelectedNoteActivity extends AppCompatActivity {
         itemNameTextView.setText(itemTitle);
 
         editNote = findViewById(R.id.editTextNote);
-        sharedPreferences = getSharedPreferences("MyNotesPrefs", Context.MODE_PRIVATE);
-
-        String savedNote = sharedPreferences.getString(itemTitle, "");
-        editNote.setText(savedNote);
 
         loadNoteContent();
     }
@@ -53,14 +62,6 @@ public class SelectedNoteActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
-        String itemName = getIntent().getStringExtra("noteTitle");
-        String noteText = editNote.getText().toString();
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString(itemName, noteText);
-        editor.apply();
-
-        String contentField = "content";
-
         updateContentField();
     }
 
@@ -118,5 +119,87 @@ public class SelectedNoteActivity extends AppCompatActivity {
         return -1;
     }
 
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.font_style_menu, menu);
 
+        MenuItem boldStyle = menu.findItem(R.id.bold_style);
+        MenuItem italicStyle = menu.findItem(R.id.italic_style);
+        MenuItem underlineStyle = menu.findItem(R.id.underline_style);
+
+        boldStyle.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(@NonNull MenuItem menuItem) {
+                applyStyleToSelection(Typeface.BOLD);
+                return false;
+            }
+        });
+        italicStyle.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(@NonNull MenuItem menuItem) {
+                applyStyleToSelection(Typeface.ITALIC);
+                return false;
+            }
+        });
+        underlineStyle.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(@NonNull MenuItem menuItem) {
+                applyUnderlineStyleToSelection(new UnderlineSpan());
+                return false;
+            }
+        });
+        return true;
+    }
+
+    private void applyUnderlineStyleToSelection(UnderlineSpan underlineSpan) {
+        int start = editNote.getSelectionStart();
+        int end = editNote.getSelectionEnd();
+
+        Editable editable = editNote.getText();
+        SpannableStringBuilder spannable = new SpannableStringBuilder(editable);
+
+        UnderlineSpan[] underlineSpans = spannable.getSpans(start, end, UnderlineSpan.class);
+
+        for (UnderlineSpan span : underlineSpans) {
+            int spanStart = spannable.getSpanStart(span);
+            int spanEnd = spannable.getSpanEnd(span);
+            if (spanStart <= start && spanEnd >= end) {
+                spannable.removeSpan(span);
+                isUnderlined = false;
+                editNote.setText(spannable);
+                return;
+            }
+        }
+
+        spannable.setSpan(underlineSpan, start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        isUnderlined = true;
+
+        editable.replace(0, editable.length(), spannable);
+    }
+
+    private void applyStyleToSelection(int typeface) {
+        int selectionStart = editNote.getSelectionStart();
+        int selectionEnd = editNote.getSelectionEnd();
+
+        Editable editableText = editNote.getText();
+        SpannableStringBuilder spannable = new SpannableStringBuilder(editableText);
+
+        if (!TextUtils.isEmpty(spannable)) {
+            StyleSpan[] styleSpans = spannable.getSpans(selectionStart, selectionEnd, StyleSpan.class);
+
+            for (StyleSpan styleSpan : styleSpans) {
+                int spanStart = spannable.getSpanStart(styleSpan);
+                int spanEnd = spannable.getSpanEnd(styleSpan);
+                if (spanStart <= selectionStart && spanEnd >= selectionEnd && styleSpan.getStyle() == typeface) {
+                    spannable.removeSpan(styleSpan);
+                    currentTypeface = Typeface.NORMAL;
+                    editNote.setText(spannable);
+                    return;
+                }
+            }
+        }
+
+        spannable.setSpan(new StyleSpan(typeface), selectionStart, selectionEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+        editableText.replace(0, editableText.length(), spannable);
+    }
 }

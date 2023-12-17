@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,6 +33,8 @@ import com.google.firebase.firestore.FirebaseFirestoreException;
 import com.google.firebase.firestore.Transaction;
 import com.squareup.picasso.Picasso;
 
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -71,7 +75,7 @@ public class UserNotesAdapter extends RecyclerView.Adapter<UserNotesAdapter.View
         NoteModel currentItem = filteredNotesList.get(position);
         sharedPreferences = context.getSharedPreferences("MyNotesPrefs", Context.MODE_PRIVATE);
 
-        Picasso.get().load(currentItem.getImageResource()).into(holder.itemImage);
+        Picasso.get().load(R.drawable.brightness).into(holder.itemImage);
         holder.itemName.setText(currentItem.getItemName());
         holder.textViewDate.setText(DateFormat.getDateInstance().format(currentItem.getDate()));
 

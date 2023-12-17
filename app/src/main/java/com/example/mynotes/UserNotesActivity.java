@@ -1,6 +1,9 @@
 package com.example.mynotes;
 
-import androidx.annotation.NonNull;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.PickVisualMediaRequest;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -60,11 +63,11 @@ public class UserNotesActivity extends AppCompatActivity {
     private UserNotesAdapter itemAdapter;
     private List<NoteModel> notesList = new ArrayList<>();
     private Uri selectedImageUri;
-    private int selectedImageResource;
     private ImageView dialogImageView;
     private FirebaseFirestore fireStore;
     private FirebaseAuth userAuth;
     private FirebaseUser currentUser;
+    private ActivityResultLauncher<PickVisualMediaRequest> pickMedia;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -106,6 +109,19 @@ public class UserNotesActivity extends AppCompatActivity {
         });
 
         loadNotesFromDatabase();
+        pickMedia =
+                registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
+
+
+                    if (uri != null) {
+                        Log.d("PhotoPicker", "Selected URI: " + uri);
+                        int flag = Intent.FLAG_GRANT_READ_URI_PERMISSION;
+                        getApplicationContext().getContentResolver().takePersistableUriPermission(uri, flag);
+                        selectedImageUri = uri;
+                    } else {
+                        Log.d("PhotoPicker", "No media selected");
+                    }
+                });
 
     }
 
@@ -245,7 +261,9 @@ public class UserNotesActivity extends AppCompatActivity {
         dialogImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                openGallery();
+                pickMedia.launch(new PickVisualMediaRequest.Builder()
+                        .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
+                        .build());
             }
         });
 

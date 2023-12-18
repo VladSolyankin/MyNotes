@@ -264,6 +264,8 @@ public class UserNotesActivity extends AppCompatActivity {
                 pickMedia.launch(new PickVisualMediaRequest.Builder()
                         .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
                         .build());
+
+                Picasso.get().load(selectedImageUri).into(dialogImageView);
             }
         });
 
@@ -283,7 +285,8 @@ public class UserNotesActivity extends AppCompatActivity {
                         noteMap.put("title", note.getItemName());
                         noteMap.put("date", note.getDate());
                         noteMap.put("content", "");
-                        noteMap.put("imagePath", note.getImageResource());
+                        noteMap.put("imagePath", selectedImageUri);
+                        noteMap.put("noteImages", new ArrayList<>());
 
                         fireStore.collection("users")
                                 .document(user.getUid())

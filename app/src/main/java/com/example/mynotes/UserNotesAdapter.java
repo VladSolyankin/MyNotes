@@ -75,7 +75,7 @@ public class UserNotesAdapter extends RecyclerView.Adapter<UserNotesAdapter.View
         NoteModel currentItem = filteredNotesList.get(position);
         sharedPreferences = context.getSharedPreferences("MyNotesPrefs", Context.MODE_PRIVATE);
 
-        Picasso.get().load(R.drawable.brightness).into(holder.itemImage);
+        Picasso.get().load(currentItem.getImageResource()).into(holder.itemImage);
         holder.itemName.setText(currentItem.getItemName());
         holder.textViewDate.setText(DateFormat.getDateInstance().format(currentItem.getDate()));
 

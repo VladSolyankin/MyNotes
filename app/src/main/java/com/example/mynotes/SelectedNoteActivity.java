@@ -33,6 +33,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.ViewSwitcher;
 
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -61,6 +62,7 @@ public class SelectedNoteActivity extends AppCompatActivity {
     private ActivityResultLauncher<PickVisualMediaRequest> pickMedia;
     private List<Uri> images = new ArrayList<>();;
     private int position;
+    private int noteIndex;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,14 +72,13 @@ public class SelectedNoteActivity extends AppCompatActivity {
         firebaseAuth = FirebaseAuth.getInstance();
         currentUser = firebaseAuth.getCurrentUser();
 
-        images.add(Uri.parse("https://pin.it/3ulAMqz"));
-        images.add(Uri.parse("https://pin.it/6al9UI8"));
-
         itemNameTextView = findViewById(R.id.itemNameTextView);
         String itemTitle = getIntent().getStringExtra("noteTitle");
         itemNameTextView.setText(itemTitle);
 
         editNote = findViewById(R.id.editTextNote);
+
+        getNoteImages(itemTitle);
 
         loadNoteContent();
 
@@ -87,19 +88,20 @@ public class SelectedNoteActivity extends AppCompatActivity {
             @Override
             public View makeView() {
                 ImageView imageView = new ImageView(getApplicationContext());
-                imageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
                 imageView.setLayoutParams(new
                         ImageSwitcher.LayoutParams(
                         LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT));
-                imageView.setBackgroundColor(0xFF000000);
+                imageView.setBackgroundColor(0x00000000);
                 return imageView;
             }
         });
         previousPictureButton = findViewById(R.id.previousPictureButton);
         nextPictureButton = findViewById(R.id.nextPictureButton);
 
-        noteImageSwitcher.setImageResource(R.drawable.brightness);
-
+        if (images.size() != 0) {
+            noteImageSwitcher.setImageURI(images.get(0));
+        }
 
         pickMedia =
                 registerForActivityResult(new ActivityResultContracts.PickVisualMedia(), uri -> {
@@ -110,6 +112,8 @@ public class SelectedNoteActivity extends AppCompatActivity {
                         int flag = Intent.FLAG_GRANT_READ_URI_PERMISSION;
                         getApplicationContext().getContentResolver().takePersistableUriPermission(uri, flag);
                         images.add(uri);
+                        updateNoteImages();
+                        noteImageSwitcher.setImageURI(uri);
                     } else {
                         Log.d("PhotoPicker", "No media selected");
                     }
@@ -139,6 +143,29 @@ public class SelectedNoteActivity extends AppCompatActivity {
         });
     }
 
+    private void getNoteImages(String itemTitle) {
+        fireStore.collection("users")
+                .document(currentUser.getUid()).get()
+                .addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+                        @Override
+                        public void onSuccess(DocumentSnapshot documentSnapshot) {
+                            List<Map<String, Object>> notes = (List<Map<String, Object>>) documentSnapshot.get("notes");
+                            for (Map<String, Object> note: notes) {
+                                if (note.get("title").toString() == itemTitle) {
+                                    images = (List<Uri>) note.get("noteImages");
+                                    noteIndex = notes.indexOf(note);
+                                }
+                            }
+                        }
+                    });
+    }
+
+    private void updateNoteImages() {
+        String pathToImageArray = "notes." + noteIndex + ".noteImages";
+        fireStore.collection("users").document(currentUser.getUid())
+                .update(pathToImageArray, images);
+    }
+
     private void showItemDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View dialogView = getLayoutInflater().inflate(R.layout.dialog_add_item, null);
@@ -153,6 +180,8 @@ public class SelectedNoteActivity extends AppCompatActivity {
                 pickMedia.launch(new PickVisualMediaRequest.Builder()
                         .setMediaType(ActivityResultContracts.PickVisualMedia.ImageOnly.INSTANCE)
                         .build());
+
+                alertDialog.dismiss();
             }
         });
 

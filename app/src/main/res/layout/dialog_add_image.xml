@@ -14,13 +14,7 @@
         android:scaleType="centerCrop"
         android:clickable="true"
         android:layout_gravity="center"
-        android:background="@drawable/circle_background" />
-
-    <EditText
-        android:id="@+id/editTextName"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:hint="Enter Name"/>
+        android:background="@drawable/circle_background"/>
 
 
     <Button

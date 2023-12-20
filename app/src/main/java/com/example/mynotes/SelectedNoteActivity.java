@@ -55,12 +55,12 @@ public class SelectedNoteActivity extends AppCompatActivity {
     private FirebaseFirestore fireStore;
     FirebaseUser currentUser;
     private ImageSwitcher noteImageSwitcher;
-    private Button nextPictureButton;
-    private Button previousPictureButton;
-    private Button newImageButton;
+    private ImageView nextPictureButton;
+    private ImageView previousPictureButton;
+    private ImageView newImageButton;
     private AlertDialog alertDialog;
     private ActivityResultLauncher<PickVisualMediaRequest> pickMedia;
-    private List<Uri> images = new ArrayList<>();;
+    private List<String> images = new ArrayList<>();;
     private int position;
     private int noteIndex;
     @Override
@@ -77,8 +77,6 @@ public class SelectedNoteActivity extends AppCompatActivity {
         itemNameTextView.setText(itemTitle);
 
         editNote = findViewById(R.id.editTextNote);
-
-        getNoteImages(itemTitle);
 
         loadNoteContent();
 
@@ -100,7 +98,7 @@ public class SelectedNoteActivity extends AppCompatActivity {
         nextPictureButton = findViewById(R.id.nextPictureButton);
 
         if (images.size() != 0) {
-            noteImageSwitcher.setImageURI(images.get(0));
+            noteImageSwitcher.setImageURI(Uri.parse(images.get(0)));
         }
 
         pickMedia =
@@ -111,7 +109,7 @@ public class SelectedNoteActivity extends AppCompatActivity {
                         Log.d("PhotoPicker", "Selected URI: " + uri);
                         int flag = Intent.FLAG_GRANT_READ_URI_PERMISSION;
                         getApplicationContext().getContentResolver().takePersistableUriPermission(uri, flag);
-                        images.add(uri);
+                        images.add(String.valueOf(uri));
                         updateNoteImages();
                         noteImageSwitcher.setImageURI(uri);
                     } else {
@@ -130,7 +128,7 @@ public class SelectedNoteActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 setPositionPrev();
-                noteImageSwitcher.setImageURI(images.get(position));
+                noteImageSwitcher.setImageURI(Uri.parse(images.get(position)));
             }
         });
 
@@ -138,9 +136,11 @@ public class SelectedNoteActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 setPositionNext();
-                noteImageSwitcher.setImageURI(images.get(position));
+                noteImageSwitcher.setImageURI(Uri.parse(images.get(position)));
             }
         });
+
+        getNoteImages(itemTitle);
     }
 
     private void getNoteImages(String itemTitle) {
@@ -151,9 +151,10 @@ public class SelectedNoteActivity extends AppCompatActivity {
                         public void onSuccess(DocumentSnapshot documentSnapshot) {
                             List<Map<String, Object>> notes = (List<Map<String, Object>>) documentSnapshot.get("notes");
                             for (Map<String, Object> note: notes) {
-                                if (note.get("title").toString() == itemTitle) {
-                                    images = (List<Uri>) note.get("noteImages");
+                                if (note.get("title").toString().equals(itemTitle)) {
+                                    images = (List<String>) note.get("noteImages");
                                     noteIndex = notes.indexOf(note);
+                                    noteImageSwitcher.setImageURI(Uri.parse(images.get(0)));
                                 }
                             }
                         }
@@ -161,9 +162,25 @@ public class SelectedNoteActivity extends AppCompatActivity {
     }
 
     private void updateNoteImages() {
-        String pathToImageArray = "notes." + noteIndex + ".noteImages";
         fireStore.collection("users").document(currentUser.getUid())
-                .update(pathToImageArray, images);
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    List<Map<String, Object>> notes = (List<Map<String, Object>>) documentSnapshot.get("notes");
+
+                    if (noteIndex >= 0 && noteIndex < notes.size()) {
+                        Map<String, Object> note = notes.get(noteIndex);
+                        note.put("noteImages", images);
+
+                        fireStore.collection("users").document(currentUser.getUid())
+                                .update("notes", notes)
+                                .addOnSuccessListener(aVoid -> {
+                                    Log.d("Update", "NoteImages updated successfully");
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e("Update", "Error updating NoteImages", e);
+                                });
+                    }
+                });
     }
 
     private void showItemDialog() {

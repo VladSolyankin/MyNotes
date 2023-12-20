@@ -14,8 +14,10 @@ import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
+import android.text.Html;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
+import android.text.Spanned;
 import android.text.TextUtils;
 import android.text.style.StyleSpan;
 import android.text.style.TypefaceSpan;
@@ -237,9 +239,10 @@ public class SelectedNoteActivity extends AppCompatActivity {
                             int indexToLoad = findIndexByTitle(notes, itemNameTextView.getText().toString());
                             if (indexToLoad >= 0 && indexToLoad < notes.size()) {
                                 Map<String, Object> noteToLoad = notes.get(indexToLoad);
-                                String content = (String) noteToLoad.get("content");
+                                String htmlContent = (String) noteToLoad.get("content");
 
-                                editNote.setText(content);
+                                Spanned spanned = Html.fromHtml(htmlContent, Html.FROM_HTML_MODE_LEGACY);
+                                editNote.setText(new SpannableStringBuilder(spanned));
                             }
                         }
                     }
@@ -257,7 +260,7 @@ public class SelectedNoteActivity extends AppCompatActivity {
                             int indexToLoad = findIndexByTitle(notes, itemNameTextView.getText().toString());
                             if (indexToLoad >= 0 && indexToLoad < notes.size()) {
                                 Map<String, Object> noteToLoad = notes.get(indexToLoad);
-                                noteToLoad.put("content", editNote.getText().toString());
+                                noteToLoad.put("content", getNoteStyles());
 
                                 fireStore.collection("users").document(currentUser.getUid())
                                         .update("notes", notes);
@@ -357,7 +360,16 @@ public class SelectedNoteActivity extends AppCompatActivity {
             }
         }
 
+
+
         spannable.setSpan(new StyleSpan(typeface), selectionStart, selectionEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         editableText.replace(0, editableText.length(), spannable);
+    }
+
+    private String getNoteStyles() {
+        Editable editable = editNote.getText();
+        SpannableStringBuilder spannable = new SpannableStringBuilder(editable);
+
+        return Html.toHtml(spannable);
     }
 }

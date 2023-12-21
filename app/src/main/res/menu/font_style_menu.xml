@@ -23,4 +23,20 @@
         app:showAsAction="always"
         >
     </item>
+    <item
+        android:id="@+id/left_alignment"
+        android:title="Слева"
+        >
+    </item>
+    <item
+        android:id="@+id/center_alignment"
+        android:title="По-центру"
+        >
+    </item>
+    <item
+        android:id="@+id/right_alignment"
+        android:title="Справа"
+        >
+    </item>
+
 </menu>

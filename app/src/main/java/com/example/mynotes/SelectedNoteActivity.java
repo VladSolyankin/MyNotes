@@ -7,27 +7,24 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.Html;
+import android.text.Layout;
 import android.text.Spannable;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.style.AlignmentSpan;
 import android.text.style.StyleSpan;
-import android.text.style.TypefaceSpan;
 import android.text.style.UnderlineSpan;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageSwitcher;
 import android.widget.ImageView;
@@ -39,13 +36,11 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
+
+import org.xml.sax.XMLReader;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -241,7 +236,7 @@ public class SelectedNoteActivity extends AppCompatActivity {
                                 Map<String, Object> noteToLoad = notes.get(indexToLoad);
                                 String htmlContent = (String) noteToLoad.get("content");
 
-                                Spanned spanned = Html.fromHtml(htmlContent, Html.FROM_HTML_MODE_LEGACY);
+                                Spanned spanned = Html.fromHtml(htmlContent, null, new MyTagHandler());
                                 editNote.setText(new SpannableStringBuilder(spanned));
                             }
                         }
@@ -290,6 +285,9 @@ public class SelectedNoteActivity extends AppCompatActivity {
         MenuItem boldStyle = menu.findItem(R.id.bold_style);
         MenuItem italicStyle = menu.findItem(R.id.italic_style);
         MenuItem underlineStyle = menu.findItem(R.id.underline_style);
+        MenuItem normalAlignment = menu.findItem(R.id.left_alignment);
+        MenuItem centerAlignment = menu.findItem(R.id.center_alignment);
+        MenuItem oppositeAlignment = menu.findItem(R.id.right_alignment);
 
         boldStyle.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
             @Override
@@ -312,6 +310,28 @@ public class SelectedNoteActivity extends AppCompatActivity {
                 return false;
             }
         });
+        normalAlignment.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(@NonNull MenuItem item) {
+                applyAlignmentToSelection(Layout.Alignment.ALIGN_NORMAL);
+                return false;
+            }
+        });
+        centerAlignment.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(@NonNull MenuItem item) {
+                applyAlignmentToSelection(Layout.Alignment.ALIGN_CENTER);
+                return false;
+            }
+        });
+        oppositeAlignment.setOnMenuItemClickListener(new MenuItem.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(@NonNull MenuItem item) {
+                applyAlignmentToSelection(Layout.Alignment.ALIGN_OPPOSITE);
+                return false;
+            }
+        });
+
         return true;
     }
 
@@ -360,16 +380,88 @@ public class SelectedNoteActivity extends AppCompatActivity {
             }
         }
 
-
-
         spannable.setSpan(new StyleSpan(typeface), selectionStart, selectionEnd, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
         editableText.replace(0, editableText.length(), spannable);
     }
 
     private String getNoteStyles() {
         Editable editable = editNote.getText();
+        return Html.toHtml(editable);
+    }
+
+    private void applyAlignmentToSelection(Layout.Alignment alignment) {
+        int start = editNote.getSelectionStart();
+        int end = editNote.getSelectionEnd();
+
+        Editable editable = editNote.getText();
         SpannableStringBuilder spannable = new SpannableStringBuilder(editable);
 
-        return Html.toHtml(spannable);
+        AlignmentSpan[] alignmentSpans = spannable.getSpans(start, end, AlignmentSpan.class);
+        for (AlignmentSpan span : alignmentSpans) {
+            int spanStart = spannable.getSpanStart(span);
+            int spanEnd = spannable.getSpanEnd(span);
+            if (spanStart <= start && spanEnd >= end) {
+                spannable.removeSpan(span);
+            }
+        }
+
+        spannable.setSpan(new AlignmentSpan.Standard(alignment), start, end, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        editable.replace(0, editable.length(), spannable);
+
+        updateContentField();
+    }
+
+    public class MyTagHandler implements Html.TagHandler {
+
+        private class Div {
+            private Layout.Alignment alignment;
+
+            public Div(Layout.Alignment alignment) {
+                this.alignment = alignment;
+            }
+
+            public Layout.Alignment getAlignment() {
+                return alignment;
+            }
+        }
+
+        @Override
+        public void handleTag(boolean opening, String tag, Editable output, XMLReader xmlReader) {
+            if (tag.equalsIgnoreCase("div")) {
+                if (opening) {
+                    // Handle the opening tag of <div>
+                    start(output, new Div(Layout.Alignment.ALIGN_NORMAL));
+                } else {
+                    // Handle the closing tag of <div>
+                    Div div = end(output, Div.class);
+                    if (div != null) {
+                        AlignmentSpan.Standard span = new AlignmentSpan.Standard(div.getAlignment());
+                        int len = output.length();
+                        output.setSpan(span, len, len, Spannable.SPAN_MARK_MARK);
+                    }
+                }
+            }
+        }
+
+        private void start(Editable text, Object mark) {
+            int len = text.length();
+            text.setSpan(mark, len, len, Spannable.SPAN_MARK_MARK);
+        }
+
+        private <T> T end(Editable text, Class<T> kind) {
+            int len = text.length();
+            T[] objs = text.getSpans(0, len, kind);
+
+            if (objs.length != 0) {
+                for (int i = objs.length; i > 0; i--) {
+                    if (text.getSpanFlags(objs[i - 1]) == Spannable.SPAN_MARK_MARK) {
+                        text.removeSpan(objs[i - 1]);
+                        return objs[i - 1];
+                    }
+                }
+            }
+            return null;
+        }
     }
 }

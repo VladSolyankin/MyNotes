@@ -236,7 +236,7 @@ public class SelectedNoteActivity extends AppCompatActivity {
                                 Map<String, Object> noteToLoad = notes.get(indexToLoad);
                                 String htmlContent = (String) noteToLoad.get("content");
 
-                                Spanned spanned = Html.fromHtml(htmlContent, null, new MyTagHandler());
+                                Spanned spanned = Html.fromHtml(htmlContent);
                                 editNote.setText(new SpannableStringBuilder(spanned));
                             }
                         }
@@ -412,56 +412,4 @@ public class SelectedNoteActivity extends AppCompatActivity {
         updateContentField();
     }
 
-    public class MyTagHandler implements Html.TagHandler {
-
-        private class Div {
-            private Layout.Alignment alignment;
-
-            public Div(Layout.Alignment alignment) {
-                this.alignment = alignment;
-            }
-
-            public Layout.Alignment getAlignment() {
-                return alignment;
-            }
-        }
-
-        @Override
-        public void handleTag(boolean opening, String tag, Editable output, XMLReader xmlReader) {
-            if (tag.equalsIgnoreCase("div")) {
-                if (opening) {
-                    // Handle the opening tag of <div>
-                    start(output, new Div(Layout.Alignment.ALIGN_NORMAL));
-                } else {
-                    // Handle the closing tag of <div>
-                    Div div = end(output, Div.class);
-                    if (div != null) {
-                        AlignmentSpan.Standard span = new AlignmentSpan.Standard(div.getAlignment());
-                        int len = output.length();
-                        output.setSpan(span, len, len, Spannable.SPAN_MARK_MARK);
-                    }
-                }
-            }
-        }
-
-        private void start(Editable text, Object mark) {
-            int len = text.length();
-            text.setSpan(mark, len, len, Spannable.SPAN_MARK_MARK);
-        }
-
-        private <T> T end(Editable text, Class<T> kind) {
-            int len = text.length();
-            T[] objs = text.getSpans(0, len, kind);
-
-            if (objs.length != 0) {
-                for (int i = objs.length; i > 0; i--) {
-                    if (text.getSpanFlags(objs[i - 1]) == Spannable.SPAN_MARK_MARK) {
-                        text.removeSpan(objs[i - 1]);
-                        return objs[i - 1];
-                    }
-                }
-            }
-            return null;
-        }
-    }
 }
